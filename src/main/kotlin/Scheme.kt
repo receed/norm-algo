@@ -7,9 +7,11 @@ class Scheme(val formulas: List<Formula>) {
         var current = word
         var ops = 0
         while (true) {
+            ops++
             val formula = getFirstApplicable(current) ?: return current
             current = formula.apply(current)
-            ops++
+            if (formula.isFinal)
+                return current
             if (current.length() > maxLength)
                 throw Exception("Word length limit exceeded")
             if (ops >= maxOps)
