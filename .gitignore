@@ -72,3 +72,6 @@ fabric.properties
 
 # Build results
 build/
+
+#Gradle
+.gradle/
