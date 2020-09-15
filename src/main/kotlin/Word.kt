@@ -1,4 +1,7 @@
 class Word(private val symbols: String) {
+    companion object {
+        fun create(symbols: String, emptyWord: String) = Word(if (symbols == emptyWord) "" else symbols)
+    }
     fun isEmpty(): Boolean = symbols.isEmpty()
     fun length(): Int = symbols.length
     fun firstMatch(sub: Word) = symbols.indexOf(sub.symbols)

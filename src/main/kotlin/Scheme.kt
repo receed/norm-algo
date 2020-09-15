@@ -13,9 +13,9 @@ class Scheme(val formulas: List<Formula>) {
             if (formula.isFinal)
                 return current
             if (current.length() > maxLength)
-                throw Exception("Word length limit exceeded")
+                throw ExecutionLimitException("Word length limit exceeded")
             if (ops >= maxOps)
-                throw Exception("Operations limit exceeded")
+                throw ExecutionLimitException("Operations limit exceeded")
         }
     }
 }
