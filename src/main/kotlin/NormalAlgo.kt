@@ -9,8 +9,8 @@ enum class Option(val command: String, val takesValue: Boolean, val defaultValue
     BATCH("b", false)
 }
 
-class InvalidInputException(message:String): Exception(message)
-class ExecutionLimitException(message:String): Exception(message)
+class InvalidInputException(message: String) : Exception(message)
+class ExecutionLimitException(message: String) : Exception(message)
 
 fun readSchemeAndWords(fileName: String, emptyWord: String): Pair<Scheme, List<Word>> {
     val file = File(fileName)
@@ -18,9 +18,10 @@ fun readSchemeAndWords(fileName: String, emptyWord: String): Pair<Scheme, List<W
         throw InvalidInputException("$fileName: no such file")
     }
     val content = file.readLines().map { it.split(' ') }.filter { it.isNotEmpty() }
-    val scheme = Scheme(content.takeWhile {it.size == 2}.map {Formula(Word.create(it[0], emptyWord), Word.create(it[1], emptyWord))})
-    val words = content.dropWhile { it.size == 2 }
-    val invalidWord = words.firstOrNull { it.size != 1}
+    val scheme = Scheme(content.takeWhile { it.size == 2 || it.size == 3 && it[2] == "." }
+        .map { Formula(Word.create(it[0], emptyWord), Word.create(it[1], emptyWord), it.size == 3) })
+    val words = content.drop(scheme.formulas.size)
+    val invalidWord = words.firstOrNull { it.size != 1 }
     if (invalidWord != null)
         throw InvalidInputException("Invalid word: $invalidWord")
     val wordList = words.map { Word.create(it[0], emptyWord) }
@@ -73,31 +74,40 @@ fun main(args: Array<String>) {
         val maxOperations: Int
         try {
             maxOperations = optionValues[Option.MAX_OPERATIONS]!!.toInt()
-        }
-        catch (exception: Exception) {
+        } catch (exception: Exception) {
             throw InvalidInputException("Operations limit isn't a number")
         }
         val maxLength: Int
         try {
             maxLength = optionValues[Option.MAX_LENGTH]!!.toInt()
-        }
-        catch (e: Exception) {
+        } catch (e: Exception) {
             throw InvalidInputException("Length limit isn't a number")
         }
         if (enabledOptions.contains(Option.BATCH)) {
             File(inputFile).forEachLine {
                 val (scheme, words) = readSchemeAndWords(it, optionValues[Option.EMPTY_WORD]!!)
-                File("$it.out").writeText(words.joinToString("\n") { word -> scheme.applyAllOrError(word, maxOperations, maxLength) })
+                File("$it.out").writeText(words.joinToString("\n") { word ->
+                    scheme.applyAllOrError(
+                        word,
+                        maxOperations,
+                        maxLength
+                    )
+                })
             }
-        }
-        else {
+        } else {
             val (scheme, words) = readSchemeAndWords(inputFile, optionValues[Option.EMPTY_WORD]!!)
             val outputFile = optionValues[Option.OUTPUT_FILE]
             if (outputFile == null) {
                 for (word in words)
                     println(scheme.applyAllOrError(word, maxOperations, maxLength))
             } else {
-                File(outputFile).writeText(words.joinToString("\n") { scheme.applyAllOrError(it, maxOperations, maxLength) })
+                File(outputFile).writeText(words.joinToString("\n") {
+                    scheme.applyAllOrError(
+                        it,
+                        maxOperations,
+                        maxLength
+                    )
+                })
             }
         }
     } catch (e: InvalidInputException) {
