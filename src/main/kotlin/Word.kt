@@ -7,6 +7,7 @@ class Word(private val symbols: String) {
     fun firstMatch(sub: Word) = symbols.indexOf(sub.symbols)
     fun replace(startIndex: Int, endIndex: Int, replacement: Word) =
         Word(symbols.substring(0, startIndex) + replacement.symbols + symbols.substring(endIndex))
+    fun getSymbols() = symbols
     override fun toString(): String = "\"$symbols\""
     override fun equals(other: Any?): Boolean =
         if (other is Word)

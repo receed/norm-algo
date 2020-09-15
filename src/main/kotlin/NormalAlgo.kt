@@ -3,7 +3,9 @@ import java.io.File
 enum class Option(val command: String, val takesValue: Boolean, val defaultValue: String? = null) {
     LOG_LEVEL("l", true),
     OUTPUT_FILE("o", true),
-    EMPTY_WORD("e", true, "\\")
+    EMPTY_WORD("e", true, "\\"),
+    MAX_OPERATIONS("mo", true, "1000"),
+    MAX_LENGTH("ml", true, "1000")
 }
 
 class InvalidInputException(message:String): Exception(message)
@@ -14,7 +16,7 @@ fun readSchemeAndWords(fileName: String, emptyWord: String): Pair<Scheme, List<W
     if (!file.exists()) {
         throw InvalidInputException("$fileName: no such file")
     }
-    val content = file.readLines().map { it.split(' ') }.filter {!it.isEmpty()}
+    val content = file.readLines().map { it.split(' ') }.filter { it.isNotEmpty() }
     val scheme = Scheme(content.takeWhile {it.size == 2}.map {Formula(Word.create(it[0], emptyWord), Word.create(it[1], emptyWord))})
     val words = content.dropWhile { it.size == 2 }
     val invalidWord = words.firstOrNull { it.size != 1}
@@ -23,7 +25,6 @@ fun readSchemeAndWords(fileName: String, emptyWord: String): Pair<Scheme, List<W
     val wordList = words.map { Word.create(it[0], emptyWord) }
     return scheme to wordList
 }
-
 fun main(args: Array<String>) {
     try {
         var inputFile: String? = null
@@ -36,10 +37,7 @@ fun main(args: Array<String>) {
                 if (lastOption != null) {
                     throw InvalidInputException("No value for ${lastOption.name}")
                 }
-                val option = nameToOption[arg.substring(1)];
-                if (option == null) {
-                    throw InvalidInputException("Unknown option: $arg")
-                }
+                val option = nameToOption[arg.substring(1)] ?: throw InvalidInputException("Unknown option: $arg");
                 if (option.takesValue) {
                     lastOption = option
                 } else {
@@ -72,15 +70,27 @@ fun main(args: Array<String>) {
                 optionValues[option] = option.defaultValue
         val (scheme, words) = readSchemeAndWords(inputFile, optionValues[Option.EMPTY_WORD]!!)
         val outputFile = optionValues[Option.OUTPUT_FILE]
+        val maxOperations: Int
+        try {
+            maxOperations = optionValues[Option.MAX_OPERATIONS]!!.toInt()
+        }
+        catch (exception: Exception) {
+            throw InvalidInputException("Operations limit isn't a number")
+        }
+        val maxLength: Int
+        try {
+            maxLength = optionValues[Option.MAX_LENGTH]!!.toInt()
+        }
+        catch (e: Exception) {
+            throw InvalidInputException("Length limit isn't a number")
+        }
         if (outputFile == null) {
             for (word in words)
-                println(scheme.applyAll(word))
+                println(scheme.applyAllOrError(word, maxOperations, maxLength))
+        } else {
+            File(outputFile).writeText(words.map { scheme.applyAllOrError(it, maxOperations, maxLength) }.joinToString("\n"))
         }
-        else {
-            File(outputFile).writeText(words.map { scheme.applyAll(it) }.joinToString("\n"))
-        }
-    }
-    catch (exception: InvalidInputException) {
-        println(exception.message)
+    } catch (e: InvalidInputException) {
+        println(e.message)
     }
 }
