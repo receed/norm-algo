@@ -5,7 +5,8 @@ enum class Option(val command: String, val takesValue: Boolean, val defaultValue
     OUTPUT_FILE("o", true),
     EMPTY_WORD("e", true, "\\"),
     MAX_OPERATIONS("mo", true, "1000"),
-    MAX_LENGTH("ml", true, "1000")
+    MAX_LENGTH("ml", true, "1000"),
+    BATCH("b", false)
 }
 
 class InvalidInputException(message:String): Exception(message)
@@ -25,6 +26,7 @@ fun readSchemeAndWords(fileName: String, emptyWord: String): Pair<Scheme, List<W
     val wordList = words.map { Word.create(it[0], emptyWord) }
     return scheme to wordList
 }
+
 fun main(args: Array<String>) {
     try {
         var inputFile: String? = null
@@ -68,8 +70,6 @@ fun main(args: Array<String>) {
         for (option in Option.values())
             if (!optionValues.containsKey(option) && option.defaultValue != null)
                 optionValues[option] = option.defaultValue
-        val (scheme, words) = readSchemeAndWords(inputFile, optionValues[Option.EMPTY_WORD]!!)
-        val outputFile = optionValues[Option.OUTPUT_FILE]
         val maxOperations: Int
         try {
             maxOperations = optionValues[Option.MAX_OPERATIONS]!!.toInt()
@@ -84,11 +84,21 @@ fun main(args: Array<String>) {
         catch (e: Exception) {
             throw InvalidInputException("Length limit isn't a number")
         }
-        if (outputFile == null) {
-            for (word in words)
-                println(scheme.applyAllOrError(word, maxOperations, maxLength))
-        } else {
-            File(outputFile).writeText(words.map { scheme.applyAllOrError(it, maxOperations, maxLength) }.joinToString("\n"))
+        if (enabledOptions.contains(Option.BATCH)) {
+            File(inputFile).forEachLine {
+                val (scheme, words) = readSchemeAndWords(it, optionValues[Option.EMPTY_WORD]!!)
+                File("$it.out").writeText(words.joinToString("\n") { word -> scheme.applyAllOrError(word, maxOperations, maxLength) })
+            }
+        }
+        else {
+            val (scheme, words) = readSchemeAndWords(inputFile, optionValues[Option.EMPTY_WORD]!!)
+            val outputFile = optionValues[Option.OUTPUT_FILE]
+            if (outputFile == null) {
+                for (word in words)
+                    println(scheme.applyAllOrError(word, maxOperations, maxLength))
+            } else {
+                File(outputFile).writeText(words.joinToString("\n") { scheme.applyAllOrError(it, maxOperations, maxLength) })
+            }
         }
     } catch (e: InvalidInputException) {
         println(e.message)
