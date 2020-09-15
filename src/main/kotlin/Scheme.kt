@@ -1,6 +1,3 @@
-import java.lang.Exception
-import kotlin.math.max
-
 class Scheme(val formulas: List<Formula>) {
     fun getFirstApplicable(word: Word) = formulas.firstOrNull { it.isApplicable(word) }
     fun applyOnce(word: Word) = getFirstApplicable(word)?.apply(word)
@@ -19,11 +16,12 @@ class Scheme(val formulas: List<Formula>) {
                 throw ExecutionLimitException("Operations limit exceeded")
         }
     }
-    fun applyAllOrError(word: Word, maxOps: Int, maxLength: Int): String {
-        return try {
-            applyAll(word, maxOps, maxLength).getSymbols()
+    fun applyAllOrError(word: Word, maxOps: Int, maxLength: Int, emptyWord: String = ""): String {
+        try {
+            val result = applyAll(word, maxOps, maxLength).getSymbols()
+            return if (result.isEmpty()) emptyWord else result
         } catch(e: ExecutionLimitException) {
-            e.message ?: "Unknown error"
+            return e.message ?: "Unknown error"
         }
     }
 }

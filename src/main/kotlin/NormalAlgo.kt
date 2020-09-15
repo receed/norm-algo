@@ -83,14 +83,16 @@ fun main(args: Array<String>) {
         } catch (e: Exception) {
             throw InvalidInputException("Length limit isn't a number")
         }
+        val emptyWord = optionValues[Option.EMPTY_WORD]!!
         if (enabledOptions.contains(Option.BATCH)) {
             File(inputFile).forEachLine {
-                val (scheme, words) = readSchemeAndWords(it, optionValues[Option.EMPTY_WORD]!!)
+                val (scheme, words) = readSchemeAndWords(it, emptyWord)
                 File("$it.out").writeText(words.joinToString("\n") { word ->
                     scheme.applyAllOrError(
                         word,
                         maxOperations,
-                        maxLength
+                        maxLength,
+                        emptyWord
                     )
                 })
             }
@@ -99,13 +101,14 @@ fun main(args: Array<String>) {
             val outputFile = optionValues[Option.OUTPUT_FILE]
             if (outputFile == null) {
                 for (word in words)
-                    println(scheme.applyAllOrError(word, maxOperations, maxLength))
+                    println(scheme.applyAllOrError(word, maxOperations, maxLength, emptyWord))
             } else {
                 File(outputFile).writeText(words.joinToString("\n") {
                     scheme.applyAllOrError(
                         it,
                         maxOperations,
-                        maxLength
+                        maxLength,
+                        emptyWord
                     )
                 })
             }
