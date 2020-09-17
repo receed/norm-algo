@@ -6,7 +6,7 @@ internal class SchemeTest {
     val scheme1 = Scheme(listOf(Formula(Word("ab"), Word("")),
         Formula(Word("a"), Word("b"))))
     val scheme2 = Scheme(listOf(Formula(Word("a"), Word("b"))))
-    val sceme3 = Scheme(listOf(Formula(Word("b"), Word("a"), true),
+    val scheme3 = Scheme(listOf(Formula(Word("b"), Word("a"), true),
         Formula(Word("a"), Word("b"))))
 
     @Test
@@ -26,6 +26,6 @@ internal class SchemeTest {
     fun applyAll() {
         assertEquals(Word("b"), scheme1.applyAll(Word("aababab")))
         assertEquals(Word("bb"), scheme2.applyAll(Word("aa")))
-        assertEquals(Word("aaa"), sceme3.applyAll(Word("aaa")))
+        assertEquals(Word("aaa"), scheme3.applyAll(Word("aaa")))
     }
 }
