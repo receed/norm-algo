@@ -1,7 +1,7 @@
 class Scheme(val formulas: List<Formula>) {
     fun getFirstApplicable(word: Word) = formulas.firstOrNull { it.isApplicable(word) }
     fun applyOnce(word: Word) = getFirstApplicable(word)?.apply(word)
-    fun applyAll(word: Word, maxOps: Int, maxLength: Int): Word {
+    fun applyAll(word: Word, maxOps: Int = 1000, maxLength: Int = 1000): Word {
         var current = word
         var ops = 0
         while (true) {
@@ -16,12 +16,12 @@ class Scheme(val formulas: List<Formula>) {
                 throw ExecutionLimitException("Operations limit exceeded")
         }
     }
-    fun applyAllOrError(word: Word, maxOps: Int, maxLength: Int, emptyWord: String = ""): String {
-        try {
+    fun applyAllOrError(word: Word, maxOps: Int = 1000, maxLength: Int = 1000, emptyWord: String = ""): String {
+        return try {
             val result = applyAll(word, maxOps, maxLength).getSymbols()
-            return if (result.isEmpty()) emptyWord else result
+            if (result.isEmpty()) emptyWord else result
         } catch(e: ExecutionLimitException) {
-            return e.message ?: "Unknown error"
+            e.message ?: "Unknown error"
         }
     }
 }
