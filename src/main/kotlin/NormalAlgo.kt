@@ -1,12 +1,12 @@
 import java.io.File
 
 enum class Option(val command: String, val takesValue: Boolean, val defaultValue: String? = null) {
-    LOG_LEVEL("l", true),
     OUTPUT_FILE("o", true),
     EMPTY_WORD("e", true, "\\"),
     MAX_OPERATIONS("mo", true, "1000"),
     MAX_LENGTH("ml", true, "1000"),
-    BATCH("b", false)
+    BATCH("b", false),
+    VERBOSE("v", false)
 }
 
 class InvalidInputException(message: String) : Exception(message)
@@ -84,12 +84,14 @@ fun main(args: Array<String>) {
             throw InvalidInputException("Length limit isn't a number")
         }
         val emptyWord = optionValues[Option.EMPTY_WORD]!!
+        val verbose = enabledOptions.contains(Option.VERBOSE)
         if (enabledOptions.contains(Option.BATCH)) {
             File(inputFile).forEachLine {
                 val (scheme, words) = readSchemeAndWords(it, emptyWord)
                 File("$it.out").writeText(words.joinToString("\n") { word ->
                     scheme.applyAllOrError(
                         word,
+                        verbose,
                         maxOperations,
                         maxLength,
                         emptyWord
@@ -101,11 +103,12 @@ fun main(args: Array<String>) {
             val outputFile = optionValues[Option.OUTPUT_FILE]
             if (outputFile == null) {
                 for (word in words)
-                    println(scheme.applyAllOrError(word, maxOperations, maxLength, emptyWord))
+                    println(scheme.applyAllOrError(word, verbose, maxOperations, maxLength, emptyWord))
             } else {
                 File(outputFile).writeText(words.joinToString("\n") {
                     scheme.applyAllOrError(
                         it,
+                        verbose,
                         maxOperations,
                         maxLength,
                         emptyWord

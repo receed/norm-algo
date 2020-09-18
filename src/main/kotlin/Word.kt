@@ -14,4 +14,5 @@ class Word(private val symbols: String) {
             symbols == other.symbols
         else
             false
+    fun view(emptyWord: String) = if (symbols.isEmpty()) emptyWord else symbols
 }

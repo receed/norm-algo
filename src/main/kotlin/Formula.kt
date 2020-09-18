@@ -8,4 +8,10 @@ class Formula(val left: Word, val right: Word, val isFinal: Boolean = false) {
         val pos = word.firstMatch(left)
         return word.replace(pos, pos + left.length(), right)
     }
+    fun viewApplication(word: Word): String {
+        val pos = word.firstMatch(left)
+        val viewLeft = word.replace(pos, pos + left.length(), Word("(${left.getSymbols()})")).getSymbols()
+        val viewRight = word.replace(pos, pos + left.length(), Word("(${right.getSymbols()})")).getSymbols()
+        return "$viewLeft =>${if (isFinal) "." else ""} $viewRight"
+    }
 }

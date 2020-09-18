@@ -20,6 +20,7 @@ see options for details)
 * -e WORD - string to denote empty word (default \\)
 * -mo NUM - maximum number of operations to perform (default 1000)
 * -ml NUM - maximum length of resulting string (default 1000)
+* -v - show applied formulas
 * -b - batch processing. Input file is interpreted as list of files to
 process, result for file "file" is written to "file.out".
 
