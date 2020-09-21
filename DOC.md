@@ -1,7 +1,7 @@
 # Markov algorithm evaluation
 
 ```
-NormalAlgo FILE [OPTION]
+java -jar prog-2020-norm-algo-receed.main.jar FILE [OPTION]...
 ```
 
 ## Input file format

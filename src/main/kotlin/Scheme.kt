@@ -1,5 +1,4 @@
 import java.lang.StringBuilder
-import kotlin.math.max
 
 class Scheme(val formulas: List<Formula>) {
     fun getFirstApplicable(word: Word) = formulas.firstOrNull { it.isApplicable(word) }
