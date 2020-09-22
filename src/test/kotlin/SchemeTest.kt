@@ -2,6 +2,7 @@ import org.junit.jupiter.api.Test
 
 import org.junit.jupiter.api.Assertions.*
 
+// Tests internal methods of the scheme class
 internal class SchemeTest {
     val scheme1 = Scheme(listOf(Formula(Word("ab"), Word("")),
         Formula(Word("a"), Word("b"))))
