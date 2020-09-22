@@ -1,5 +1,6 @@
 import java.io.File
 
+// Contains names and defaults for command-line options
 enum class Option(val command: String, val takesValue: Boolean, val defaultValue: String? = null) {
     INPUT_FILE("", true),
     OUTPUT_FILE("o", true),
@@ -10,11 +11,13 @@ enum class Option(val command: String, val takesValue: Boolean, val defaultValue
     VERBOSE("v", false)
 }
 
+// Contains options in fields of proper types
 class OptionValues(val inputFile: String, val outputFile: String?, val emptyWord: String, val maxOps: Int, val maxLength: Int, val batch: Boolean, val verbose: Boolean)
 
 class InvalidInputException(message: String) : Exception(message)
 class ExecutionLimitException(message: String) : Exception(message)
 
+// Reads algorithm scheme and input words from file
 fun readSchemeAndWords(fileName: String, emptyWord: String): Pair<Scheme, List<Word>> {
     val file = File(fileName)
     if (!file.exists()) {
@@ -31,6 +34,7 @@ fun readSchemeAndWords(fileName: String, emptyWord: String): Pair<Scheme, List<W
     return scheme to wordList
 }
 
+// Associates string values of options with their names
 fun parseOptions(args: Array<String>): Map<Option, String> {
     var lastOption: Option? = null
     val nameToOption = Option.values().map { it.command to it }.toMap()
@@ -71,6 +75,7 @@ fun parseOptions(args: Array<String>): Map<Option, String> {
     return optionStrings
 }
 
+// Converts string values of the options to required types
 fun convertOptions(optionStrings: Map<Option, String>): OptionValues {
     return OptionValues(
         optionStrings[Option.INPUT_FILE] ?: throw InvalidInputException("No input file"),
@@ -83,7 +88,8 @@ fun convertOptions(optionStrings: Map<Option, String>): OptionValues {
     )
 }
 
-fun runScheme(outputFile: String, scheme: Scheme, words: List<Word>, optionValues: OptionValues) {
+// Runs a Markov algorithm and writes the result into a file
+fun runSchemeToFile(outputFile: String, scheme: Scheme, words: List<Word>, optionValues: OptionValues) {
     File(outputFile).writeText(words.joinToString("\n") { word ->
         scheme.applyAllOrError(
             word,
@@ -95,6 +101,21 @@ fun runScheme(outputFile: String, scheme: Scheme, words: List<Word>, optionValue
     })
 }
 
+// Runs a Markov algorithm and writes the result into console
+fun runSchemeToStdout(scheme: Scheme, words: List<Word>, optionValues: OptionValues) {
+    for (word in words)
+        println(
+            scheme.applyAllOrError(
+                word,
+                optionValues.verbose,
+                optionValues.maxOps,
+                optionValues.maxLength,
+                optionValues.emptyWord
+            )
+        )
+}
+
+// Entry point
 fun main(args: Array<String>) {
     try {
         val optionStrings = parseOptions(args)
@@ -102,16 +123,15 @@ fun main(args: Array<String>) {
         if (optionValues.batch) {
             File(optionValues.inputFile).forEachLine {
                 val (scheme, words) = readSchemeAndWords(it, optionValues.emptyWord)
-                runScheme("$it.out", scheme, words, optionValues)
+                runSchemeToFile("$it.out", scheme, words, optionValues)
             }
         } else {
             val (scheme, words) = readSchemeAndWords(optionValues.inputFile, optionValues.emptyWord)
             val outputFile = optionValues.outputFile
             if (outputFile == null) {
-                for (word in words)
-                    println(scheme.applyAllOrError(word, optionValues.verbose, optionValues.maxOps, optionValues.maxLength, optionValues.emptyWord))
+                runSchemeToStdout(scheme, words, optionValues)
             } else {
-                runScheme(outputFile, scheme, words, optionValues)
+                runSchemeToFile(outputFile, scheme, words, optionValues)
             }
         }
     } catch (e: InvalidInputException) {
