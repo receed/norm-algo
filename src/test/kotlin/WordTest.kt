@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
 
+// Test the internal methods of the word class
 internal class WordTest {
     private val empty = Word("")
     private val a = Word("a")
