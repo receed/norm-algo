@@ -1,6 +1,7 @@
 import java.io.File
 
 enum class Option(val command: String, val takesValue: Boolean, val defaultValue: String? = null) {
+    INPUT_FILE("", true),
     OUTPUT_FILE("o", true),
     EMPTY_WORD("e", true, "\\"),
     MAX_OPERATIONS("mo", true, "1000"),
@@ -8,6 +9,8 @@ enum class Option(val command: String, val takesValue: Boolean, val defaultValue
     BATCH("b", false),
     VERBOSE("v", false)
 }
+
+class OptionValues(val inputFile: String, val outputFile: String?, val emptyWord: String, val maxOps: Int, val maxLength: Int, val batch: Boolean, val verbose: Boolean)
 
 class InvalidInputException(message: String) : Exception(message)
 class ExecutionLimitException(message: String) : Exception(message)
@@ -28,92 +31,87 @@ fun readSchemeAndWords(fileName: String, emptyWord: String): Pair<Scheme, List<W
     return scheme to wordList
 }
 
-fun main(args: Array<String>) {
-    try {
-        var inputFile: String? = null
-        var lastOption: Option? = null
-        val nameToOption = Option.values().map { it.command to it }.toMap()
-        val enabledOptions = mutableSetOf<Option>()
-        val optionValues = mutableMapOf<Option, String>()
-        for (arg in args) {
-            if (arg.startsWith("-")) {
-                if (lastOption != null) {
-                    throw InvalidInputException("No value for ${lastOption.name}")
-                }
-                val option = nameToOption[arg.substring(1)] ?: throw InvalidInputException("Unknown option: $arg");
-                if (option.takesValue) {
-                    lastOption = option
-                } else {
-                    enabledOptions.add(option)
-                }
-            } else {
-                if (lastOption != null) {
-                    if (optionValues.containsKey(lastOption)) {
-                        throw InvalidInputException("More than one value for option ${lastOption.command}")
-                    }
-                    optionValues[lastOption] = arg
-                    lastOption = null
-                } else {
-                    if (inputFile == null)
-                        inputFile = arg
-                    else {
-                        throw InvalidInputException("More than one input file")
-                    }
-                }
+fun parseOptions(args: Array<String>): Map<Option, String> {
+    var lastOption: Option? = null
+    val nameToOption = Option.values().map { it.command to it }.toMap()
+    val optionStrings = mutableMapOf<Option, String>()
+    for (arg in args) {
+        if (arg.startsWith("-")) {
+            if (lastOption != null) {
+                throw InvalidInputException("No value for ${lastOption.name}")
             }
-        }
-        if (lastOption != null) {
-            throw InvalidInputException("No value for ${lastOption.name}")
-        }
-        if (inputFile == null) {
-            throw InvalidInputException("No input file")
-        }
-        for (option in Option.values())
-            if (!optionValues.containsKey(option) && option.defaultValue != null)
-                optionValues[option] = option.defaultValue
-        val maxOperations: Int
-        try {
-            maxOperations = optionValues[Option.MAX_OPERATIONS]!!.toInt()
-        } catch (exception: Exception) {
-            throw InvalidInputException("Operations limit isn't a number")
-        }
-        val maxLength: Int
-        try {
-            maxLength = optionValues[Option.MAX_LENGTH]!!.toInt()
-        } catch (e: Exception) {
-            throw InvalidInputException("Length limit isn't a number")
-        }
-        val emptyWord = optionValues[Option.EMPTY_WORD]!!
-        val verbose = enabledOptions.contains(Option.VERBOSE)
-        if (enabledOptions.contains(Option.BATCH)) {
-            File(inputFile).forEachLine {
-                val (scheme, words) = readSchemeAndWords(it, emptyWord)
-                File("$it.out").writeText(words.joinToString("\n") { word ->
-                    scheme.applyAllOrError(
-                        word,
-                        verbose,
-                        maxOperations,
-                        maxLength,
-                        emptyWord
-                    )
-                })
+            val option = nameToOption[arg.substring(1)] ?: throw InvalidInputException("Unknown option: $arg");
+            if (option.takesValue) {
+                lastOption = option
+            } else {
+                optionStrings[option] = "1"
             }
         } else {
-            val (scheme, words) = readSchemeAndWords(inputFile, optionValues[Option.EMPTY_WORD]!!)
-            val outputFile = optionValues[Option.OUTPUT_FILE]
+            if (lastOption != null) {
+                if (optionStrings.containsKey(lastOption)) {
+                    throw InvalidInputException("More than one value for option ${lastOption.command}")
+                }
+                optionStrings[lastOption] = arg
+                lastOption = null
+            } else {
+                if (!optionStrings.containsKey(Option.INPUT_FILE))
+                    optionStrings[Option.INPUT_FILE] = arg
+                else {
+                    throw InvalidInputException("More than one input file")
+                }
+            }
+        }
+    }
+    if (lastOption != null) {
+        throw InvalidInputException("No value for ${lastOption.name}")
+    }
+    for (option in Option.values())
+        if (!optionStrings.containsKey(option) && option.defaultValue != null)
+            optionStrings[option] = option.defaultValue
+    return optionStrings
+}
+
+fun convertOptions(optionStrings: Map<Option, String>): OptionValues {
+    return OptionValues(
+        optionStrings[Option.INPUT_FILE] ?: throw InvalidInputException("No input file"),
+        optionStrings[Option.OUTPUT_FILE],
+        optionStrings[Option.EMPTY_WORD] ?: error("No empty word"),
+        optionStrings[Option.MAX_OPERATIONS]?.toIntOrNull() ?: throw InvalidInputException("Operations limit isn't a number"),
+        optionStrings[Option.MAX_LENGTH]?.toIntOrNull() ?: throw InvalidInputException("Length limit isn't a number"),
+        optionStrings.containsKey(Option.BATCH),
+        optionStrings.containsKey(Option.VERBOSE),
+    )
+}
+
+fun runScheme(outputFile: String, scheme: Scheme, words: List<Word>, optionValues: OptionValues) {
+    File(outputFile).writeText(words.joinToString("\n") { word ->
+        scheme.applyAllOrError(
+            word,
+            optionValues.verbose,
+            optionValues.maxOps,
+            optionValues.maxLength,
+            optionValues.emptyWord
+        )
+    })
+}
+
+fun main(args: Array<String>) {
+    try {
+        val optionStrings = parseOptions(args)
+        val optionValues = convertOptions(optionStrings)
+        if (optionValues.batch) {
+            File(optionValues.inputFile).forEachLine {
+                val (scheme, words) = readSchemeAndWords(it, optionValues.emptyWord)
+                runScheme("$it.out", scheme, words, optionValues)
+            }
+        } else {
+            val (scheme, words) = readSchemeAndWords(optionValues.inputFile, optionValues.emptyWord)
+            val outputFile = optionValues.outputFile
             if (outputFile == null) {
                 for (word in words)
-                    println(scheme.applyAllOrError(word, verbose, maxOperations, maxLength, emptyWord))
+                    println(scheme.applyAllOrError(word, optionValues.verbose, optionValues.maxOps, optionValues.maxLength, optionValues.emptyWord))
             } else {
-                File(outputFile).writeText(words.joinToString("\n") {
-                    scheme.applyAllOrError(
-                        it,
-                        verbose,
-                        maxOperations,
-                        maxLength,
-                        emptyWord
-                    )
-                })
+                runScheme(outputFile, scheme, words, optionValues)
             }
         }
     } catch (e: InvalidInputException) {
