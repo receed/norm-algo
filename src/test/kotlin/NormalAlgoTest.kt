@@ -13,4 +13,14 @@ internal class NormalAlgoTest {
             assertEquals(expected, result)
         }
     }
+    @Test
+    fun single() {
+        val inputFiles = (1..5).map{"data/test$it"}
+        for (inputFile in inputFiles) {
+            main(arrayOf(inputFile, "-o", "output"))
+            val result = File("output").readLines()
+            val expected = File("$inputFile.a").readLines()
+            assertEquals(expected, result)
+        }
+    }
 }
