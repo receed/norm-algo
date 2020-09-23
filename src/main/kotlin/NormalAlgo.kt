@@ -42,44 +42,67 @@ fun readSchemeAndWords(fileName: String, emptyWord: String): Pair<Scheme, List<W
     return scheme to wordList
 }
 
+// Processes an argument which is an option name (starts with "-")
+// Takes last option which should be assigned a value and returns new value of such option
+fun processOptionName(
+    arg: String,
+    lastOption: Option?,
+    commandToOption: Map<String, Option>,
+    optionStrings: MutableMap<Option, String>
+): Option? {
+    if (lastOption != null) {
+        throw InvalidInputException("No value for -${lastOption.command}")
+    }
+    val option = commandToOption[arg.substring(1)] ?: throw InvalidInputException("Unknown option: $arg");
+    return if (option.takesValue) { // Value for the option should be the next argument
+        option
+    } else { // A boolean option is enabled
+        optionStrings[option] = "1"
+        null
+    }
+}
+
+// Processes an argument which is an option value (doesn't start with "-")
+// Takes last option which should be assigned a value
+fun processOptionValue(arg: String, lastOption: Option?, optionStrings: MutableMap<Option, String>) {
+    if (lastOption != null) {
+        if (optionStrings.containsKey(lastOption)) {
+            throw InvalidInputException("More than one value for option ${lastOption.command}")
+        }
+        optionStrings[lastOption] = arg
+    } else {
+        if (!optionStrings.containsKey(Option.INPUT_FILE))
+            optionStrings[Option.INPUT_FILE] = arg
+        else {
+            throw InvalidInputException("More than one input file")
+        }
+    }
+}
+
+// Assigns default values to options without a value
+fun fillDefaultValues(optionStrings: MutableMap<Option, String>) {
+    for (option in Option.values())
+        if (!optionStrings.containsKey(option) && option.defaultValue != null)
+            optionStrings[option] = option.defaultValue
+}
+
 // Associates string values of options with their names
 fun parseOptions(args: Array<String>): Map<Option, String> {
-    var lastOption: Option? = null
+    var lastOption: Option? = null // last option without a value
     val commandToOption = Option.values().map { it.command to it }.toMap()
     val optionStrings = mutableMapOf<Option, String>()
     for (arg in args) {
-        if (arg.startsWith("-")) {
-            if (lastOption != null) {
-                throw InvalidInputException("No value for -${lastOption.command}")
-            }
-            val option = commandToOption[arg.substring(1)] ?: throw InvalidInputException("Unknown option: $arg");
-            if (option.takesValue) {
-                lastOption = option
-            } else {
-                optionStrings[option] = "1"
-            }
+        lastOption = if (arg.startsWith("-")) {
+            processOptionName(arg, lastOption, commandToOption, optionStrings)
         } else {
-            if (lastOption != null) {
-                if (optionStrings.containsKey(lastOption)) {
-                    throw InvalidInputException("More than one value for option ${lastOption.command}")
-                }
-                optionStrings[lastOption] = arg
-                lastOption = null
-            } else {
-                if (!optionStrings.containsKey(Option.INPUT_FILE))
-                    optionStrings[Option.INPUT_FILE] = arg
-                else {
-                    throw InvalidInputException("More than one input file")
-                }
-            }
+            processOptionValue(arg, lastOption, optionStrings)
+            null
         }
     }
     if (lastOption != null) {
         throw InvalidInputException("No value for -${lastOption.command}")
     }
-    for (option in Option.values())
-        if (!optionStrings.containsKey(option) && option.defaultValue != null)
-            optionStrings[option] = option.defaultValue
+    fillDefaultValues(optionStrings)
     return optionStrings
 }
 
