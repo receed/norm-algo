@@ -12,7 +12,15 @@ enum class Option(val command: String, val takesValue: Boolean, val defaultValue
 }
 
 // Contains options in fields of proper types
-class OptionValues(val inputFile: String, val outputFile: String?, val emptyWord: String, val maxOps: Int, val maxLength: Int, val batch: Boolean, val verbose: Boolean)
+class OptionValues(
+    val inputFile: String,
+    val outputFile: String?,
+    val emptyWord: String,
+    val maxOps: Int,
+    val maxLength: Int,
+    val batch: Boolean,
+    val verbose: Boolean
+)
 
 class InvalidInputException(message: String) : Exception(message)
 class ExecutionLimitException(message: String) : Exception(message)
@@ -37,14 +45,14 @@ fun readSchemeAndWords(fileName: String, emptyWord: String): Pair<Scheme, List<W
 // Associates string values of options with their names
 fun parseOptions(args: Array<String>): Map<Option, String> {
     var lastOption: Option? = null
-    val nameToOption = Option.values().map { it.command to it }.toMap()
+    val commandToOption = Option.values().map { it.command to it }.toMap()
     val optionStrings = mutableMapOf<Option, String>()
     for (arg in args) {
         if (arg.startsWith("-")) {
             if (lastOption != null) {
-                throw InvalidInputException("No value for ${lastOption.name}")
+                throw InvalidInputException("No value for -${lastOption.command}")
             }
-            val option = nameToOption[arg.substring(1)] ?: throw InvalidInputException("Unknown option: $arg");
+            val option = commandToOption[arg.substring(1)] ?: throw InvalidInputException("Unknown option: $arg");
             if (option.takesValue) {
                 lastOption = option
             } else {
@@ -67,7 +75,7 @@ fun parseOptions(args: Array<String>): Map<Option, String> {
         }
     }
     if (lastOption != null) {
-        throw InvalidInputException("No value for ${lastOption.name}")
+        throw InvalidInputException("No value for -${lastOption.command}")
     }
     for (option in Option.values())
         if (!optionStrings.containsKey(option) && option.defaultValue != null)
@@ -81,7 +89,8 @@ fun convertOptions(optionStrings: Map<Option, String>): OptionValues {
         optionStrings[Option.INPUT_FILE] ?: throw InvalidInputException("No input file"),
         optionStrings[Option.OUTPUT_FILE],
         optionStrings[Option.EMPTY_WORD] ?: error("No empty word"),
-        optionStrings[Option.MAX_OPERATIONS]?.toIntOrNull() ?: throw InvalidInputException("Operations limit isn't a number"),
+        optionStrings[Option.MAX_OPERATIONS]?.toIntOrNull()
+            ?: throw InvalidInputException("Operations limit isn't a number"),
         optionStrings[Option.MAX_LENGTH]?.toIntOrNull() ?: throw InvalidInputException("Length limit isn't a number"),
         optionStrings.containsKey(Option.BATCH),
         optionStrings.containsKey(Option.VERBOSE),
@@ -115,24 +124,34 @@ fun runSchemeToStdout(scheme: Scheme, words: List<Word>, optionValues: OptionVal
         )
 }
 
+// Writes the result for the input file to the output file or to the console
+fun processSingle(optionValues: OptionValues) {
+    val (scheme, words) = readSchemeAndWords(optionValues.inputFile, optionValues.emptyWord)
+    val outputFile = optionValues.outputFile
+    if (outputFile == null) {
+        runSchemeToStdout(scheme, words, optionValues)
+    } else {
+        runSchemeToFile(outputFile, scheme, words, optionValues)
+    }
+}
+
+// Uses input file as a list of files to process
+fun processBatch(optionValues: OptionValues) {
+    File(optionValues.inputFile).forEachLine {
+        val (scheme, words) = readSchemeAndWords(it, optionValues.emptyWord)
+        runSchemeToFile("$it.out", scheme, words, optionValues)
+    }
+}
+
 // Entry point
 fun main(args: Array<String>) {
     try {
         val optionStrings = parseOptions(args)
         val optionValues = convertOptions(optionStrings)
         if (optionValues.batch) {
-            File(optionValues.inputFile).forEachLine {
-                val (scheme, words) = readSchemeAndWords(it, optionValues.emptyWord)
-                runSchemeToFile("$it.out", scheme, words, optionValues)
-            }
+            processBatch(optionValues)
         } else {
-            val (scheme, words) = readSchemeAndWords(optionValues.inputFile, optionValues.emptyWord)
-            val outputFile = optionValues.outputFile
-            if (outputFile == null) {
-                runSchemeToStdout(scheme, words, optionValues)
-            } else {
-                runSchemeToFile(outputFile, scheme, words, optionValues)
-            }
+            processSingle(optionValues)
         }
     } catch (e: InvalidInputException) {
         println(e.message)
