@@ -23,4 +23,7 @@ class Word(private val symbols: String) {
             false
     // Substitutes empty word with readable string
     fun view(emptyWord: String) = if (symbols.isEmpty()) emptyWord else symbols
+    override fun hashCode(): Int {
+        return symbols.hashCode()
+    }
 }
