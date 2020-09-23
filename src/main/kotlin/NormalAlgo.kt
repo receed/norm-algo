@@ -67,7 +67,7 @@ fun processOptionName(
 fun processOptionValue(arg: String, lastOption: Option?, optionStrings: MutableMap<Option, String>) {
     if (lastOption != null) {
         if (optionStrings.containsKey(lastOption)) {
-            throw InvalidInputException("More than one value for option ${lastOption.command}")
+            throw InvalidInputException("More than one value for option -${lastOption.command}")
         }
         optionStrings[lastOption] = arg
     } else {
@@ -166,9 +166,9 @@ fun processBatch(optionValues: OptionValues) {
     }
 }
 
-// Entry point
-fun main(args: Array<String>) {
-    try {
+// Entry point. Returns error message or null
+fun main(args: Array<String>): String? {
+    return try {
         val optionStrings = parseOptions(args)
         val optionValues = convertOptions(optionStrings)
         if (optionValues.batch) {
@@ -176,7 +176,9 @@ fun main(args: Array<String>) {
         } else {
             processSingle(optionValues)
         }
+        null
     } catch (e: InvalidInputException) {
         println(e.message)
+        e.message
     }
 }

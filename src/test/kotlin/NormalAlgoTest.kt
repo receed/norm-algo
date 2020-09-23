@@ -40,4 +40,17 @@ internal class NormalAlgoTest {
             assertEquals(expected, result)
         }
     }
+    @Test
+    fun invalidInput() {
+        assertEquals("No input file", main(arrayOf("-v", "-ml", "3000")))
+        assertEquals("No value for -o", main(arrayOf("data/test1", "-o", "-mo", "3000")))
+        assertEquals("No value for -o", main(arrayOf("data/test1", "-mo", "3000", "-o")))
+        assertEquals("FILE: no such file", main(arrayOf("FILE")))
+        assertEquals("More than one value for option -o", main(arrayOf("-o", "out2", "data/test1", "-o", "out1")))
+        assertEquals("Operations limit isn't a number", main(arrayOf("data/test1", "-o", "out1", "-mo", "inf")))
+        assertEquals("Length limit isn't a number", main(arrayOf("data/test1", "-o", "out1", "-ml", "3.14")))
+        assertEquals("More than one input file", main(arrayOf("data/test1", "data/test2")))
+        assertEquals("More than one input file", main(arrayOf("data/test1", "data/test2")))
+        assertEquals("Unknown option: -x", main(arrayOf("x", "-x")))
+    }
 }
