@@ -9,7 +9,7 @@ internal class NormalAlgoTest {
     @Test
     fun batch() {
         val inputFile = "data/test"
-        main(arrayOf(inputFile, "-b"))
+        processAll(arrayOf(inputFile, "-b"))
         File(inputFile).forEachLine {
             val result = File("$it.out").readLines()
             val expected = File("$it.a").readLines()
@@ -22,7 +22,7 @@ internal class NormalAlgoTest {
     fun single() {
         val inputFiles = (1..5).map{"data/test$it"}
         for (inputFile in inputFiles) {
-            main(arrayOf(inputFile, "-o", "output"))
+            processAll(arrayOf(inputFile, "-o", "output"))
             val result = File("output").readLines()
             val expected = File("$inputFile.a").readLines()
             assertEquals(expected, result)
@@ -34,7 +34,7 @@ internal class NormalAlgoTest {
     fun verbose() {
         val inputFiles = (1..5).map{"data/test$it"}
         for (inputFile in inputFiles) {
-            main(arrayOf(inputFile, "-o", "output", "-v"))
+            processAll(arrayOf(inputFile, "-o", "output", "-v"))
             val result = File("output").readLines()
             val expected = File("$inputFile.v.a").readLines()
             assertEquals(expected, result)
@@ -42,15 +42,15 @@ internal class NormalAlgoTest {
     }
     @Test
     fun invalidInput() {
-        assertEquals("No input file", main(arrayOf("-v", "-ml", "3000")))
-        assertEquals("No value for -o", main(arrayOf("data/test1", "-o", "-mo", "3000")))
-        assertEquals("No value for -o", main(arrayOf("data/test1", "-mo", "3000", "-o")))
-        assertEquals("FILE: no such file", main(arrayOf("FILE")))
-        assertEquals("More than one value for option -o", main(arrayOf("-o", "out2", "data/test1", "-o", "out1")))
-        assertEquals("Operations limit isn't a number", main(arrayOf("data/test1", "-o", "out1", "-mo", "inf")))
-        assertEquals("Length limit isn't a number", main(arrayOf("data/test1", "-o", "out1", "-ml", "3.14")))
-        assertEquals("More than one input file", main(arrayOf("data/test1", "data/test2")))
-        assertEquals("More than one input file", main(arrayOf("data/test1", "data/test2")))
-        assertEquals("Unknown option: -x", main(arrayOf("x", "-x")))
+        assertEquals("No input file", processAll(arrayOf("-v", "-ml", "3000")))
+        assertEquals("No value for -o", processAll(arrayOf("data/test1", "-o", "-mo", "3000")))
+        assertEquals("No value for -o", processAll(arrayOf("data/test1", "-mo", "3000", "-o")))
+        assertEquals("FILE: no such file", processAll(arrayOf("FILE")))
+        assertEquals("More than one value for option -o", processAll(arrayOf("-o", "out2", "data/test1", "-o", "out1")))
+        assertEquals("Operations limit isn't a number", processAll(arrayOf("data/test1", "-o", "out1", "-mo", "inf")))
+        assertEquals("Length limit isn't a number", processAll(arrayOf("data/test1", "-o", "out1", "-ml", "3.14")))
+        assertEquals("More than one input file", processAll(arrayOf("data/test1", "data/test2")))
+        assertEquals("More than one input file", processAll(arrayOf("data/test1", "data/test2")))
+        assertEquals("Unknown option: -x", processAll(arrayOf("x", "-x")))
     }
 }

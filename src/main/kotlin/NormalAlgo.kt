@@ -53,7 +53,7 @@ fun processOptionName(
     if (lastOption != null) {
         throw InvalidInputException("No value for -${lastOption.command}")
     }
-    val option = commandToOption[arg.substring(1)] ?: throw InvalidInputException("Unknown option: $arg");
+    val option = commandToOption[arg.substring(1)] ?: throw InvalidInputException("Unknown option: $arg")
     return if (option.takesValue) { // Value for the option should be the next argument
         option
     } else { // A boolean option is enabled
@@ -166,8 +166,9 @@ fun processBatch(optionValues: OptionValues) {
     }
 }
 
-// Entry point. Returns error message or null
-fun main(args: Array<String>): String? {
+// Parses arguments, reads files, executes algorithms and writes results.
+// Put to a separate function for error testing because main should return Unit
+fun processAll(args: Array<String>): String? {
     return try {
         val optionStrings = parseOptions(args)
         val optionValues = convertOptions(optionStrings)
@@ -178,7 +179,13 @@ fun main(args: Array<String>): String? {
         }
         null
     } catch (e: InvalidInputException) {
-        println(e.message)
         e.message
     }
+}
+
+// Entry point
+fun main(args: Array<String>) {
+    val inputError = processAll(args)
+    if (inputError != null)
+        println(inputError)
 }
