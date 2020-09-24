@@ -18,40 +18,75 @@ internal class WordTest {
     @Test
     fun isEmpty() {
         assertTrue(empty.isEmpty())
+    }
+
+    @Test
+    fun isNotEmpty() {
         assertFalse(a.isEmpty())
     }
 
+    @Test
+    fun `length if empty is 0`() {
+        assertEquals(0, empty.length())
+    }
 
-    @TestFactory
-    fun length() = listOf(
-        empty to 0,
-        abacaba to 7,
-        aaaa to 4)
-    .map {(word, len) -> DynamicTest.dynamicTest("length of $word is $len") { assertEquals(len, word.length())}}
+    @Test
+    fun length() {
+        assertEquals(7, abacaba.length())
+    }
 
-    @TestFactory
-    fun firstMatch() = listOf(
-        Triple(empty, empty, 0),
-        Triple(a, empty, 0),
-        Triple(b, b, 0),
-        Triple(abacaba, caba, 3),
-        Triple(aaaa, b, -1),
-        Triple(empty, a, -1)
-    )
-        .map {(word, sub, pos) -> DynamicTest.dynamicTest("$word matches $sub from position $pos")
-            { assertEquals(pos, word.firstMatch(sub))}}
+    @Test
+    fun `empty matches empty`() {
+        assertEquals(0, empty.firstMatch(empty))
+    }
 
-    @TestFactory
-    fun replace() = listOf(
-        ReplaceTest(empty, 0, 0, empty, empty),
-        ReplaceTest(empty, 0, 0, aaaa, aaaa),
-        ReplaceTest(abacaba, 1, 3, empty, acaba),
-        ReplaceTest(aaaa, 0, 4, b, b)
-    )
-    .map {DynamicTest.dynamicTest(
-        "replacing [${it.startIndex}, ${it.endIndex}) in ${it.word} with ${it.sub} gives ${it.result}")
-        { assertEquals(it.result, it.word.replace(it.startIndex, it.endIndex, it.sub))}}
-    companion object {
-        data class ReplaceTest(val word: Word, val startIndex: Int, val endIndex: Int, val sub: Word, val result: Word)
+    @Test
+    fun `empty matches start of any word`() {
+        assertEquals(0, a.firstMatch(empty))
+    }
+
+    @Test
+    fun `word matches itself`() {
+        assertEquals(0, b.firstMatch(b))
+    }
+
+    @Test
+    fun `word does not match empty`() {
+        assertEquals(-1, empty.firstMatch(a))
+    }
+
+    @Test
+    fun `first match`() {
+        assertEquals(3, abacaba.firstMatch(caba))
+    }
+
+    @Test
+    fun `no match`() {
+        assertEquals(-1, aaaa.firstMatch(b))
+    }
+
+    @Test
+    fun `replace empty by empty`() {
+        assertEquals(empty, empty.replace(0, 0, empty))
+    }
+
+    @Test
+    fun `replace empty by non-empty`() {
+        assertEquals(aaaa, empty.replace(0, 0, aaaa))
+    }
+
+    @Test
+    fun `replace all word`() {
+        assertEquals(b, aaaa.replace(0, 4, b))
+    }
+
+    @Test
+    fun `replace something by empty`() {
+        assertEquals(acaba, abacaba.replace(1, 3, empty))
+    }
+
+    @Test
+    fun replace() {
+        assertEquals(abacaba, aaaa.replace(1, 3, Word("bacab")))
     }
 }
