@@ -4,6 +4,8 @@
 java -jar prog-2020-norm-algo-receed.main.jar FILE [OPTION]...
 ```
 
+or edit arguments in Gradle run configuration.
+
 ## Input file format
 
 In the top of the input file substitution formulas should be 

@@ -28,3 +28,6 @@ jar {
     }
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
 }
+run {
+    args = ["data/test1", "-v", "-o", "data/test1.out"]
+}

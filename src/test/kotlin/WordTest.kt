@@ -1,9 +1,5 @@
 import org.junit.jupiter.api.Test
-//import org.junit.jupiter.params.ParameterizedTest
-//import org.junit.jupiter.params.provider.MethodSource
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.DynamicTest
-import org.junit.jupiter.api.TestFactory
 
 // Test the internal methods of the word class
 internal class WordTest {
