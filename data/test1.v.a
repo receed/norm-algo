@@ -1,0 +1,5 @@
+a(ab)abab => a()abab
+a(ab)ab => a()ab
+a(ab) => a()
+(a) => (b)
+b
